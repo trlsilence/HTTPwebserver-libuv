@@ -1,0 +1,136 @@
+syntax = "proto2";
+
+package transport_proto;
+
+message Transport_proto{
+	message CHead{
+			required float Version = 1;  //协议版本
+			required int32 UserType = 2;  //用户类型
+			required int32 CmdType = 3;  //命令类型
+			required int32 StateID = 4;  //状态码
+			required int32 RspTime = 5;  //响应时间
+			enum User_Type {
+				General = 0;   //普通用户
+				Enterprise = 1;  //企业用户
+				CDNnode = 2;  //CDN节点
+			}
+			enum Cmd_Type {
+				GetCDN = 0 ;  //获取CDN
+				GetCDNRsp = 1; //获取CDN的响应
+				AssignCDN = 2;  //分配任务
+				AssignCDNRsp = 3; //CDN拉源响应
+				AssignCDNRep = 4; //回源结果上报
+				AddMirror = 5;   //添加镜像
+				AddMirrorRsp = 6; //添加镜像响应 
+				CDNAddFile = 7;  //CDN文件添加
+			   	CDNDelFile = 8;  //CDN文件删除
+				CDNStateRep = 9;   //CDN状态信息上报
+				CDNFileRep = 10;  //CDN文件信息上报
+				AssignCDNRsptoUser = 11;  //后端保存有CDN的信息
+				CDNFindSourceResult = 12;  //后端对CDN回源信息处理结果反馈
+				CDNReportIP = 13; //CDN上报IP、端口和ID
+			}
+			enum State_ID {
+				ReqOk = 100; //请求成功
+				AddmirroOk = 111;  //添加镜像成功
+				NoFee = 112; //客户欠费
+				FindConOk = 120; // CDN回源成功	
+			}
+	}
+
+	message CBodyFront
+	{
+		message GetCDN
+		{
+			required string User_URL = 1;  //用户请求的URL
+			required string UserID = 2; //用户的ID
+		}
+		message AssignCDN
+		{
+			required string method = 1; //用户请求的方法
+			required string User_URL = 2;  //用户请求的URL
+			required int32 managerid = 3; //manager后端的句柄
+		}
+		message AssignCDNRep
+		{
+			  required int32 cdnid = 1;  //CDN的ID
+			  required string requested_url =2;  //source request
+		}
+		message AddMirror
+		{
+			required string Domain = 1;  //企业的域名
+			required string En_IP = 2; //企业web缓存IP
+		}
+		message ReturnManagerIDtoCDN    //回馈CDN hello包的内容，还是对应命令字13  
+		{
+			required int32 managerid = 1;  //返回Manager的ID
+			required int32 cdnid =2;  //返回CDN的ID 
+		}	
+	}
+
+	message CBodyCDN
+	{
+		message AssignCDNRsp
+		{
+			required string CDN_URL = 1; //CDN的域名+文件路径
+			required string requested_url = 2;  //source request
+			required int32 managerid =3;  //后端的ID
+		}
+		message StateInfo      //case9
+		{
+			required int32 m_ullMaxBand = 1;
+			required int32 m_ullUseBand = 2;
+			required int32 m_ullDCDNBand = 3;
+			required int32 m_ullMaxSpace = 4;
+			required int32 m_ullUseSpace = 5;
+			required int32 m_uiHealthDegree = 6;
+			required int32 m_iLastKeepAliveTime = 7;
+			required int32 managerid =8;  //后端的ID
+			required int32 cdnid = 9; //cdn ID
+		}
+		message FileInfo  //case10
+		{
+			required string FileinfoRep = 1;
+			required int32 managerid =2;  //后端的ID
+			required int32 cdnid = 3; //cdn ID
+		}
+		message CDNReportIP   //CDN发送的hello包 ，命令字13
+		{
+			//required string cdnip_port = 1;
+			//required int32 cdnidforethm = 2;
+		}
+		
+	}
+
+	message CBodyBack
+	{
+		message GetCDNRsp   //后端没有用户请求内容的信息，需要指派CDN回源，命令字1
+		{
+			required string requested_url = 1;  //用户请求的URL
+			required int32 cdnhandler = 2; //CDN节点的回话句柄 
+		}
+		message GetCDNRspAnother //后端有CDN节点的信息，直接返回重定向链接，命令字11
+		{
+			required string CDN_URL = 1;  //CDN的域名（IP）+文件路径
+			required string UserID = 2; //用户的ID（用IP标识） 
+		}
+		message AddMirrorRsp
+		{	
+		}
+		message DelFile
+		{
+			required int32 cdnhandler = 1;
+			required string DelFilelist = 2;
+		}
+		message AddFile
+		{
+			required int32 cdnhandler = 1;
+			required string AddFilelist = 2;
+		}
+		message CDNFindSourceResult     //back get find source result response
+		{
+			required string userid = 1;  //普通用户通信句柄映射到的ID
+			required string redirecturl = 2;   //返回给用户重定向的URL
+		}
+	}
+}
